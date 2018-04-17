@@ -3,16 +3,142 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+Set working directory and load necessary packages.
 
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = "H:/Projects/11000/11155/TraffStudy/DataCollection/FreewayData/Detector Data/Volume Data")
 
-```{r}
-plot(cars)
+##below are a list of packages required to run the markdown file
+library(tidyverse)
+library(lubridate)
+library(gridExtra)
+library(reshape2)
+library(zoo)
+library(rgdal)
+library(imputeTS)
 ```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+Load the data for March. Load each file
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+```{r explore March}
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+dir('./March 18')
+
+```
+
+```{r load data for March}
+path <- './March 18'
+
+### list out all the csv files that start with TT_ and then have a number. This will avoid loading in the unwanted aggregated files or VMT files.
+###'^_\\d.' returns all files that end with _some_digit.csv.
+list_csv <- dir(path=path,pattern = '*_\\d.csv')
+
+myfiles <- lapply(paste(path,'/',list_csv,sep=''),
+                  function(x) read.csv(x,stringsAsFactors = FALSE))
+
+files <- mapply(cbind,myfiles,'filename' = list_csv,SIMPLIFY = F)
+
+dat <- bind_rows(files)
+
+#create a dataset that we will edit....
+March_18_dat <- dat
+```
+
+
+
+```{r examine columns}
+
+colnames(March_18_dat)
+```
+
+Lets fix the column headers first. There are no headers for the first 3 columns and also there appears to be a column at the end of the data frame "X.3"
+
+```{r suymmary of dataset}
+summary(March_18_dat$X.3)
+```
+
+All NAs.... remove.
+
+```{r remove blank last column}
+
+March_18_dat <- March_18_dat[,!names(March_18_dat) == "X.3"]
+
+```
+
+Focus on the first three columns
+
+```{r examine first 3 rows}
+str(March_18_dat[1:3])
+```
+
+Column 1 is the detector ID
+Column 2 is the metric
+Column 3 is the date.
+
+
+```{r change first 3 column names}
+
+colnames(March_18_dat)[1:3] <- c('Detector_ID','Metric','Date')
+
+```
+
+Now lets change the data types in the columns
+
+```{r metric and Date_posixct}
+
+March_18_dat$Metric <- as.factor(March_18_dat$Metric)
+March_18_dat$Date_Posixct <- as.POSIXct(March_18_dat$Date,format="%Y/%m/%d")
+
+## Check that our dates worked out. We don't want any NAs.
+table(March_18_dat$Date_Posixct)
+
+```
+
+There noon and midnight are labelled as strings. The rest of the columns are labelled as times formats (in strings). Lets change noon and midnight to the same format as the other times.
+
+```{r change noon midnight names}
+
+colnames(March_18_dat)[colnames(March_18_dat)%in%
+                         c('X1.AM','X2.AM','X3.AM','X4.AM','X5.AM','X6.AM',
+                           'X7.AM','X8.AM','X9.AM','X10.AM','X11.AM',
+                           'X1.PM','X2.PM','X3.PM','X4.PM','X5.PM','X6.PM',
+                           'X7.PM','X8.PM','X9.PM','X10.PM','X11.PM','Noon','Midnight')] <-
+  c('X1.00.AM','X2.00.AM','X3.00.AM','X4.00.AM','X5.00.AM','X6.00.AM',
+    'X7.00.AM','X8.00.AM','X9.00.AM','X10.00.AM','X11.00.AM',
+    'X1.00.PM','X2.00.PM','X3.00.PM','X4.00.PM','X5.00.PM','X6.00.PM',
+    'X7.00.PM','X8.00.PM','X9.00.PM','X10.00.PM','X11.00.PM','X00.00.AM','X00.00.PM')
+
+March_18_dat <- March_18_dat %>% select(Detector_ID,Metric,Date,Date_Posixct,filename,everything())
+
+```
+
+Melt the data
+
+```{r melt}
+
+March_18_melt <- melt(March_18_dat,id.vars = c('Detector_ID','Metric','Date','Date_Posixct','filename'),variable.name = "Time",value.name = 'Volume')
+
+```
+
+Create Date_Time variable
+
+```{r Date_Time}
+
+#remove X
+March_18_melt$Time <- gsub('X','',March_18_melt$Time)
+
+March_18_melt$Date_Time <- as.POSIXct(paste(March_18_melt$Date,March_18_melt$Time),format="%Y/%m/%d %I.%M.%p")
+
+```
+
+Filter to the PM Peak hours, 2pm to 7pm.
+
+```{r}
+
+PM_Peak <- c(14:19)
+
+March_18_melt_PM_Peak <- March_18_melt[hours(March_18_melt$Date_Time)%in%PM_Peak,]
+
+```
+
+

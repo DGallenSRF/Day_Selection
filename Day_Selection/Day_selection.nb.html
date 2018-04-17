@@ -173,21 +173,168 @@ $(document).ready(function () {
 
 
 <!-- rnb-text-begin -->
-<p>This is an <a href="http://rmarkdown.rstudio.com">R Markdown</a> Notebook. When you execute code within the notebook, the results appear beneath the code.</p>
-<p>Try executing this chunk by clicking the <em>Run</em> button within the chunk or by placing your cursor inside it and pressing <em>Ctrl+Shift+Enter</em>.</p>
+<p>Set working directory and load necessary packages.</p>
+<!-- rnb-text-end -->
+<!-- rnb-text-begin -->
+<p>Load the data for March. Load each file</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxucGxvdChjYXJzKVxuYGBgIn0= -->
-<pre class="r"><code>plot(cars)</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZGlyKCcuL01hcmNoIDE4JylcblxuYGBgIn0= -->
+<pre class="r"><code>dir('./March 18')
+</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiIFsxXSBcIkNvbWJpbmVkX01hcmNoLmNzdlwiIFwiTWFyY2hfMS5jc3ZcIiAgICAgICAgXCJNYXJjaF8xMC5jc3ZcIiAgICAgICBcIk1hcmNoXzExLmNzdlwiICAgICAgIFwiTWFyY2hfMTIuY3N2XCIgICAgICBcbiBbNl0gXCJNYXJjaF8xOFwiICAgICAgICAgICBcIk1hcmNoXzIuY3N2XCIgICAgICAgIFwiTWFyY2hfMy5jc3ZcIiAgICAgICAgXCJNYXJjaF80LmNzdlwiICAgICAgICBcIk1hcmNoXzUuY3N2XCIgICAgICAgXG5bMTFdIFwiTWFyY2hfNi5jc3ZcIiAgICAgICAgXCJNYXJjaF83LmNzdlwiICAgICAgICBcIk1hcmNoXzguY3N2XCIgICAgICAgIFwiTWFyY2hfOS5jc3ZcIiAgICAgICBcbiJ9 -->
+<pre><code> [1] &quot;Combined_March.csv&quot; &quot;March_1.csv&quot;        &quot;March_10.csv&quot;       &quot;March_11.csv&quot;       &quot;March_12.csv&quot;      
+ [6] &quot;March_18&quot;           &quot;March_2.csv&quot;        &quot;March_3.csv&quot;        &quot;March_4.csv&quot;        &quot;March_5.csv&quot;       
+[11] &quot;March_6.csv&quot;        &quot;March_7.csv&quot;        &quot;March_8.csv&quot;        &quot;March_9.csv&quot;       </code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxucGF0aCA8LSAnLi9NYXJjaCAxOCdcbiMjIyBsaXN0IG91dCBhbGwgdGhlIGNzdiBmaWxlcyB0aGF0IHN0YXJ0IHdpdGggVFRfIGFuZCB0aGVuIGhhdmUgYSBudW1iZXIuIFRoaXMgd2lsbCBhdm9pZCBsb2FkaW5nIGluIHRoZSB1bndhbnRlZCBhZ2dyZWdhdGVkIGZpbGVzIG9yIFZNVCBmaWxlcy5cbiMjIydeX1xcXFxkLicgcmV0dXJucyBhbGwgZmlsZXMgdGhhdCBlbmQgd2l0aCBfc29tZV9kaWdpdC5jc3YuXG5saXN0X2NzdiA8LSBkaXIocGF0aD1wYXRoLHBhdHRlcm4gPSAnKl9cXFxcZC5jc3YnKVxubXlmaWxlcyA8LSBsYXBwbHkocGFzdGUocGF0aCwnLycsbGlzdF9jc3Ysc2VwPScnKSxcbiAgICAgICAgICAgICAgICAgIGZ1bmN0aW9uKHgpIHJlYWQuY3N2KHgsc3RyaW5nc0FzRmFjdG9ycyA9IEZBTFNFKSlcbmZpbGVzIDwtIG1hcHBseShjYmluZCxteWZpbGVzLCdmaWxlbmFtZScgPSBsaXN0X2NzdixTSU1QTElGWSA9IEYpXG5kYXQgPC0gYmluZF9yb3dzKGZpbGVzKVxuYGBgIn0= -->
+<pre class="r"><code>path &lt;- './March 18'
+### list out all the csv files that start with TT_ and then have a number. This will avoid loading in the unwanted aggregated files or VMT files.
+###'^_\\d.' returns all files that end with _some_digit.csv.
+list_csv &lt;- dir(path=path,pattern = '*_\\d.csv')
+myfiles &lt;- lapply(paste(path,'/',list_csv,sep=''),
+                  function(x) read.csv(x,stringsAsFactors = FALSE))
+files &lt;- mapply(cbind,myfiles,'filename' = list_csv,SIMPLIFY = F)
+dat &lt;- bind_rows(files)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiVW5lcXVhbCBmYWN0b3IgbGV2ZWxzOiBjb2VyY2luZyB0byBjaGFyYWN0ZXJiaW5kaW5nIGNoYXJhY3RlciBhbmQgZmFjdG9yIHZlY3RvciwgY29lcmNpbmcgaW50byBjaGFyYWN0ZXIgdmVjdG9yYmluZGluZyBjaGFyYWN0ZXIgYW5kIGZhY3RvciB2ZWN0b3IsIGNvZXJjaW5nIGludG8gY2hhcmFjdGVyIHZlY3RvcmJpbmRpbmcgY2hhcmFjdGVyIGFuZCBmYWN0b3IgdmVjdG9yLCBjb2VyY2luZyBpbnRvIGNoYXJhY3RlciB2ZWN0b3JiaW5kaW5nIGNoYXJhY3RlciBhbmQgZmFjdG9yIHZlY3RvciwgY29lcmNpbmcgaW50byBjaGFyYWN0ZXIgdmVjdG9yYmluZGluZyBjaGFyYWN0ZXIgYW5kIGZhY3RvciB2ZWN0b3IsIGNvZXJjaW5nIGludG8gY2hhcmFjdGVyIHZlY3RvcmJpbmRpbmcgY2hhcmFjdGVyIGFuZCBmYWN0b3IgdmVjdG9yLCBjb2VyY2luZyBpbnRvIGNoYXJhY3RlciB2ZWN0b3JiaW5kaW5nIGNoYXJhY3RlciBhbmQgZmFjdG9yIHZlY3RvciwgY29lcmNpbmcgaW50byBjaGFyYWN0ZXIgdmVjdG9yYmluZGluZyBjaGFyYWN0ZXIgYW5kIGZhY3RvciB2ZWN0b3IsIGNvZXJjaW5nIGludG8gY2hhcmFjdGVyIHZlY3RvcmJpbmRpbmcgY2hhcmFjdGVyIGFuZCBmYWN0b3IgdmVjdG9yLCBjb2VyY2luZyBpbnRvIGNoYXJhY3RlciB2ZWN0b3JcbiJ9 -->
+<pre><code>Unequal factor levels: coercing to characterbinding character and factor vector, coercing into character vectorbinding character and factor vector, coercing into character vectorbinding character and factor vector, coercing into character vectorbinding character and factor vector, coercing into character vectorbinding character and factor vector, coercing into character vectorbinding character and factor vector, coercing into character vectorbinding character and factor vector, coercing into character vectorbinding character and factor vector, coercing into character vectorbinding character and factor vector, coercing into character vector</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuY29sbmFtZXMoTWFyY2hfMThfZGF0KVxuYGBgIn0= -->
+<pre class="r"><code>colnames(March_18_dat)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiICBbMV0gXCJYXCIgICAgICAgICBcIlguMVwiICAgICAgIFwiWC4yXCIgICAgICAgXCJYMTIuMTUuQU1cIiBcIlgxMi4zMC5BTVwiIFwiWDEyLjQ1LkFNXCIgXCJYMS5BTVwiICAgICBcIlgxLjE1LkFNXCIgIFwiWDEuMzAuQU1cIiBcbiBbMTBdIFwiWDEuNDUuQU1cIiAgXCJYMi5BTVwiICAgICBcIlgyLjE1LkFNXCIgIFwiWDIuMzAuQU1cIiAgXCJYMi40NS5BTVwiICBcIlgzLkFNXCIgICAgIFwiWDMuMTUuQU1cIiAgXCJYMy4zMC5BTVwiICBcIlgzLjQ1LkFNXCIgXG4gWzE5XSBcIlg0LkFNXCIgICAgIFwiWDQuMTUuQU1cIiAgXCJYNC4zMC5BTVwiICBcIlg0LjQ1LkFNXCIgIFwiWDUuQU1cIiAgICAgXCJYNS4xNS5BTVwiICBcIlg1LjMwLkFNXCIgIFwiWDUuNDUuQU1cIiAgXCJYNi5BTVwiICAgIFxuIFsyOF0gXCJYNi4xNS5BTVwiICBcIlg2LjMwLkFNXCIgIFwiWDYuNDUuQU1cIiAgXCJYNy5BTVwiICAgICBcIlg3LjE1LkFNXCIgIFwiWDcuMzAuQU1cIiAgXCJYNy40NS5BTVwiICBcIlg4LkFNXCIgICAgIFwiWDguMTUuQU1cIiBcbiBbMzddIFwiWDguMzAuQU1cIiAgXCJYOC40NS5BTVwiICBcIlg5LkFNXCIgICAgIFwiWDkuMTUuQU1cIiAgXCJYOS4zMC5BTVwiICBcIlg5LjQ1LkFNXCIgIFwiWDEwLkFNXCIgICAgXCJYMTAuMTUuQU1cIiBcIlgxMC4zMC5BTVwiXG4gWzQ2XSBcIlgxMC40NS5BTVwiIFwiWDExLkFNXCIgICAgXCJYMTEuMTUuQU1cIiBcIlgxMS4zMC5BTVwiIFwiWDExLjQ1LkFNXCIgXCJOb29uXCIgICAgICBcIlgxMi4xNS5QTVwiIFwiWDEyLjMwLlBNXCIgXCJYMTIuNDUuUE1cIlxuIFs1NV0gXCJYMS5QTVwiICAgICBcIlgxLjE1LlBNXCIgIFwiWDEuMzAuUE1cIiAgXCJYMS40NS5QTVwiICBcIlgyLlBNXCIgICAgIFwiWDIuMTUuUE1cIiAgXCJYMi4zMC5QTVwiICBcIlgyLjQ1LlBNXCIgIFwiWDMuUE1cIiAgICBcbiBbNjRdIFwiWDMuMTUuUE1cIiAgXCJYMy4zMC5QTVwiICBcIlgzLjQ1LlBNXCIgIFwiWDQuUE1cIiAgICAgXCJYNC4xNS5QTVwiICBcIlg0LjMwLlBNXCIgIFwiWDQuNDUuUE1cIiAgXCJYNS5QTVwiICAgICBcIlg1LjE1LlBNXCIgXG4gWzczXSBcIlg1LjMwLlBNXCIgIFwiWDUuNDUuUE1cIiAgXCJYNi5QTVwiICAgICBcIlg2LjE1LlBNXCIgIFwiWDYuMzAuUE1cIiAgXCJYNi40NS5QTVwiICBcIlg3LlBNXCIgICAgIFwiWDcuMTUuUE1cIiAgXCJYNy4zMC5QTVwiIFxuIFs4Ml0gXCJYNy40NS5QTVwiICBcIlg4LlBNXCIgICAgIFwiWDguMTUuUE1cIiAgXCJYOC4zMC5QTVwiICBcIlg4LjQ1LlBNXCIgIFwiWDkuUE1cIiAgICAgXCJYOS4xNS5QTVwiICBcIlg5LjMwLlBNXCIgIFwiWDkuNDUuUE1cIiBcbiBbOTFdIFwiWDEwLlBNXCIgICAgXCJYMTAuMTUuUE1cIiBcIlgxMC4zMC5QTVwiIFwiWDEwLjQ1LlBNXCIgXCJYMTEuUE1cIiAgICBcIlgxMS4xNS5QTVwiIFwiWDExLjMwLlBNXCIgXCJYMTEuNDUuUE1cIiBcIk1pZG5pZ2h0XCIgXG5bMTAwXSBcIlguM1wiICAgICAgIFwiZmlsZW5hbWVcIiBcbiJ9 -->
+<pre><code>  [1] &quot;X&quot;         &quot;X.1&quot;       &quot;X.2&quot;       &quot;X12.15.AM&quot; &quot;X12.30.AM&quot; &quot;X12.45.AM&quot; &quot;X1.AM&quot;     &quot;X1.15.AM&quot;  &quot;X1.30.AM&quot; 
+ [10] &quot;X1.45.AM&quot;  &quot;X2.AM&quot;     &quot;X2.15.AM&quot;  &quot;X2.30.AM&quot;  &quot;X2.45.AM&quot;  &quot;X3.AM&quot;     &quot;X3.15.AM&quot;  &quot;X3.30.AM&quot;  &quot;X3.45.AM&quot; 
+ [19] &quot;X4.AM&quot;     &quot;X4.15.AM&quot;  &quot;X4.30.AM&quot;  &quot;X4.45.AM&quot;  &quot;X5.AM&quot;     &quot;X5.15.AM&quot;  &quot;X5.30.AM&quot;  &quot;X5.45.AM&quot;  &quot;X6.AM&quot;    
+ [28] &quot;X6.15.AM&quot;  &quot;X6.30.AM&quot;  &quot;X6.45.AM&quot;  &quot;X7.AM&quot;     &quot;X7.15.AM&quot;  &quot;X7.30.AM&quot;  &quot;X7.45.AM&quot;  &quot;X8.AM&quot;     &quot;X8.15.AM&quot; 
+ [37] &quot;X8.30.AM&quot;  &quot;X8.45.AM&quot;  &quot;X9.AM&quot;     &quot;X9.15.AM&quot;  &quot;X9.30.AM&quot;  &quot;X9.45.AM&quot;  &quot;X10.AM&quot;    &quot;X10.15.AM&quot; &quot;X10.30.AM&quot;
+ [46] &quot;X10.45.AM&quot; &quot;X11.AM&quot;    &quot;X11.15.AM&quot; &quot;X11.30.AM&quot; &quot;X11.45.AM&quot; &quot;Noon&quot;      &quot;X12.15.PM&quot; &quot;X12.30.PM&quot; &quot;X12.45.PM&quot;
+ [55] &quot;X1.PM&quot;     &quot;X1.15.PM&quot;  &quot;X1.30.PM&quot;  &quot;X1.45.PM&quot;  &quot;X2.PM&quot;     &quot;X2.15.PM&quot;  &quot;X2.30.PM&quot;  &quot;X2.45.PM&quot;  &quot;X3.PM&quot;    
+ [64] &quot;X3.15.PM&quot;  &quot;X3.30.PM&quot;  &quot;X3.45.PM&quot;  &quot;X4.PM&quot;     &quot;X4.15.PM&quot;  &quot;X4.30.PM&quot;  &quot;X4.45.PM&quot;  &quot;X5.PM&quot;     &quot;X5.15.PM&quot; 
+ [73] &quot;X5.30.PM&quot;  &quot;X5.45.PM&quot;  &quot;X6.PM&quot;     &quot;X6.15.PM&quot;  &quot;X6.30.PM&quot;  &quot;X6.45.PM&quot;  &quot;X7.PM&quot;     &quot;X7.15.PM&quot;  &quot;X7.30.PM&quot; 
+ [82] &quot;X7.45.PM&quot;  &quot;X8.PM&quot;     &quot;X8.15.PM&quot;  &quot;X8.30.PM&quot;  &quot;X8.45.PM&quot;  &quot;X9.PM&quot;     &quot;X9.15.PM&quot;  &quot;X9.30.PM&quot;  &quot;X9.45.PM&quot; 
+ [91] &quot;X10.PM&quot;    &quot;X10.15.PM&quot; &quot;X10.30.PM&quot; &quot;X10.45.PM&quot; &quot;X11.PM&quot;    &quot;X11.15.PM&quot; &quot;X11.30.PM&quot; &quot;X11.45.PM&quot; &quot;Midnight&quot; 
+[100] &quot;X.3&quot;       &quot;filename&quot; </code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Lets fix the column headers first. There are no headers for the first 3 columns and also there appears to be a column at the end of the data frame “X.3”</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc3VtbWFyeShNYXJjaF8xOF9kYXQkWC4zKVxuYGBgIn0= -->
+<pre class="r"><code>summary(March_18_dat$X.3)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiICAgTW9kZSAgICBOQSdzIFxubG9naWNhbCAgIDM5OTkwIFxuIn0= -->
+<pre><code>   Mode    NA's 
+logical   39990 </code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>All NAs…. remove.</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuTWFyY2hfMThfZGF0IDwtIE1hcmNoXzE4X2RhdFssIW5hbWVzKE1hcmNoXzE4X2RhdCkgPT0gXCJYLjNcIl1cbmBgYCJ9 -->
+<pre class="r"><code>March_18_dat &lt;- March_18_dat[,!names(March_18_dat) == &quot;X.3&quot;]</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
-<p>Add a new chunk by clicking the <em>Insert Chunk</em> button on the toolbar or by pressing <em>Ctrl+Alt+I</em>.</p>
-<p>When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the <em>Preview</em> button or press <em>Ctrl+Shift+K</em> to preview the HTML file).</p>
-<p>The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike <em>Knit</em>, <em>Preview</em> does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.</p>
+<p>Focus on the first three columns</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc3RyKE1hcmNoXzE4X2RhdFsxOjNdKVxuYGBgIn0= -->
+<pre class="r"><code>str(March_18_dat[1:3])</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiJ2RhdGEuZnJhbWUnOlx0Mzk5OTAgb2JzLiBvZiAgMyB2YXJpYWJsZXM6XG4gJCBYICA6IGludCAgMTE4MCAxMTgwIDExODAgMTE4MCAxMTgwIDExODAgMTE4MCAxMTgwIDExODAgMTE4MCAuLi5cbiAkIFguMTogY2hyICBcIkRlbnNpdHlcIiBcIkRlbnNpdHlcIiBcIkRlbnNpdHlcIiBcIkRlbnNpdHlcIiAuLi5cbiAkIFguMjogY2hyICBcIjIwMTgvMDMvMDFcIiBcIjIwMTgvMDMvMDJcIiBcIjIwMTgvMDMvMDNcIiBcIjIwMTgvMDMvMDRcIiAuLi5cbiJ9 -->
+<pre><code>'data.frame':   39990 obs. of  3 variables:
+ $ X  : int  1180 1180 1180 1180 1180 1180 1180 1180 1180 1180 ...
+ $ X.1: chr  &quot;Density&quot; &quot;Density&quot; &quot;Density&quot; &quot;Density&quot; ...
+ $ X.2: chr  &quot;2018/03/01&quot; &quot;2018/03/02&quot; &quot;2018/03/03&quot; &quot;2018/03/04&quot; ...</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Column 1 is the detector ID Column 2 is the metric Column 3 is the date.</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuY29sbmFtZXMoTWFyY2hfMThfZGF0KVsxOjNdIDwtIGMoJ0RldGVjdG9yX0lEJywnTWV0cmljJywnRGF0ZScpXG5gYGAifQ== -->
+<pre class="r"><code>colnames(March_18_dat)[1:3] &lt;- c('Detector_ID','Metric','Date')</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Now lets change the data types in the columns</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuTWFyY2hfMThfZGF0JE1ldHJpYyA8LSBhcy5mYWN0b3IoTWFyY2hfMThfZGF0JE1ldHJpYylcbk1hcmNoXzE4X2RhdCREYXRlX1Bvc2l4Y3QgPC0gYXMuUE9TSVhjdChNYXJjaF8xOF9kYXQkRGF0ZSxmb3JtYXQ9XCIlWS8lbS8lZFwiKVxuIyMgQ2hlY2sgdGhhdCBvdXIgZGF0ZXMgd29ya2VkIG91dC4gV2UgZG9uJ3Qgd2FudCBhbnkgTkFzLlxudGFibGUoTWFyY2hfMThfZGF0JERhdGVfUG9zaXhjdClcbmBgYCJ9 -->
+<pre class="r"><code>March_18_dat$Metric &lt;- as.factor(March_18_dat$Metric)
+March_18_dat$Date_Posixct &lt;- as.POSIXct(March_18_dat$Date,format=&quot;%Y/%m/%d&quot;)
+## Check that our dates worked out. We don't want any NAs.
+table(March_18_dat$Date_Posixct)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiXG4yMDE4LTAzLTAxIDIwMTgtMDMtMDIgMjAxOC0wMy0wMyAyMDE4LTAzLTA0IDIwMTgtMDMtMDUgMjAxOC0wMy0wNiAyMDE4LTAzLTA3IDIwMTgtMDMtMDggMjAxOC0wMy0wOSAyMDE4LTAzLTEwIFxuICAgICAgMTI5MCAgICAgICAxMjkwICAgICAgIDEyOTAgICAgICAgMTI5MCAgICAgICAxMjkwICAgICAgIDEyOTAgICAgICAgMTI5MCAgICAgICAxMjkwICAgICAgIDEyOTAgICAgICAgMTI5MCBcbjIwMTgtMDMtMTEgMjAxOC0wMy0xMiAyMDE4LTAzLTEzIDIwMTgtMDMtMTQgMjAxOC0wMy0xNSAyMDE4LTAzLTE2IDIwMTgtMDMtMTcgMjAxOC0wMy0xOCAyMDE4LTAzLTE5IDIwMTgtMDMtMjAgXG4gICAgICAxMjkwICAgICAgIDEyOTAgICAgICAgMTI5MCAgICAgICAxMjkwICAgICAgIDEyOTAgICAgICAgMTI5MCAgICAgICAxMjkwICAgICAgIDEyOTAgICAgICAgMTI5MCAgICAgICAxMjkwIFxuMjAxOC0wMy0yMSAyMDE4LTAzLTIyIDIwMTgtMDMtMjMgMjAxOC0wMy0yNCAyMDE4LTAzLTI1IDIwMTgtMDMtMjYgMjAxOC0wMy0yNyAyMDE4LTAzLTI4IDIwMTgtMDMtMjkgMjAxOC0wMy0zMCBcbiAgICAgIDEyOTAgICAgICAgMTI5MCAgICAgICAxMjkwICAgICAgIDEyOTAgICAgICAgMTI5MCAgICAgICAxMjkwICAgICAgIDEyOTAgICAgICAgMTI5MCAgICAgICAxMjkwICAgICAgIDEyOTAgXG4yMDE4LTAzLTMxIFxuICAgICAgMTI5MCBcbiJ9 -->
+<pre><code>
+2018-03-01 2018-03-02 2018-03-03 2018-03-04 2018-03-05 2018-03-06 2018-03-07 2018-03-08 2018-03-09 2018-03-10 
+      1290       1290       1290       1290       1290       1290       1290       1290       1290       1290 
+2018-03-11 2018-03-12 2018-03-13 2018-03-14 2018-03-15 2018-03-16 2018-03-17 2018-03-18 2018-03-19 2018-03-20 
+      1290       1290       1290       1290       1290       1290       1290       1290       1290       1290 
+2018-03-21 2018-03-22 2018-03-23 2018-03-24 2018-03-25 2018-03-26 2018-03-27 2018-03-28 2018-03-29 2018-03-30 
+      1290       1290       1290       1290       1290       1290       1290       1290       1290       1290 
+2018-03-31 
+      1290 </code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>There noon and midnight are labelled as strings. The rest of the columns are labelled as times formats (in strings). Lets change noon and midnight to the same format as the other times.</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuY29sbmFtZXMoTWFyY2hfMThfZGF0KVtjb2xuYW1lcyhNYXJjaF8xOF9kYXQpJWluJVxuICAgICAgICAgICAgICAgICAgICAgICAgIGMoJ1gxLkFNJywnWDIuQU0nLCdYMy5BTScsJ1g0LkFNJywnWDUuQU0nLCdYNi5BTScsXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAnWDcuQU0nLCdYOC5BTScsJ1g5LkFNJywnWDEwLkFNJywnWDExLkFNJyxcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICdYMS5QTScsJ1gyLlBNJywnWDMuUE0nLCdYNC5QTScsJ1g1LlBNJywnWDYuUE0nLFxuICAgICAgICAgICAgICAgICAgICAgICAgICAgJ1g3LlBNJywnWDguUE0nLCdYOS5QTScsJ1gxMC5QTScsJ1gxMS5QTScsJ05vb24nLCdNaWRuaWdodCcpXSA8LVxuICBjKCdYMS4wMC5BTScsJ1gyLjAwLkFNJywnWDMuMDAuQU0nLCdYNC4wMC5BTScsJ1g1LjAwLkFNJywnWDYuMDAuQU0nLFxuICAgICdYNy4wMC5BTScsJ1g4LjAwLkFNJywnWDkuMDAuQU0nLCdYMTAuMDAuQU0nLCdYMTEuMDAuQU0nLFxuICAgICdYMS4wMC5QTScsJ1gyLjAwLlBNJywnWDMuMDAuUE0nLCdYNC4wMC5QTScsJ1g1LjAwLlBNJywnWDYuMDAuUE0nLFxuICAgICdYNy4wMC5QTScsJ1g4LjAwLlBNJywnWDkuMDAuUE0nLCdYMTAuMDAuUE0nLCdYMTEuMDAuUE0nLCdYMDAuMDAuQU0nLCdYMDAuMDAuUE0nKVxuTWFyY2hfMThfZGF0IDwtIE1hcmNoXzE4X2RhdCAlPiUgc2VsZWN0KERldGVjdG9yX0lELE1ldHJpYyxEYXRlLERhdGVfUG9zaXhjdCxmaWxlbmFtZSxldmVyeXRoaW5nKCkpXG5gYGAifQ== -->
+<pre class="r"><code>colnames(March_18_dat)[colnames(March_18_dat)%in%
+                         c('X1.AM','X2.AM','X3.AM','X4.AM','X5.AM','X6.AM',
+                           'X7.AM','X8.AM','X9.AM','X10.AM','X11.AM',
+                           'X1.PM','X2.PM','X3.PM','X4.PM','X5.PM','X6.PM',
+                           'X7.PM','X8.PM','X9.PM','X10.PM','X11.PM','Noon','Midnight')] &lt;-
+  c('X1.00.AM','X2.00.AM','X3.00.AM','X4.00.AM','X5.00.AM','X6.00.AM',
+    'X7.00.AM','X8.00.AM','X9.00.AM','X10.00.AM','X11.00.AM',
+    'X1.00.PM','X2.00.PM','X3.00.PM','X4.00.PM','X5.00.PM','X6.00.PM',
+    'X7.00.PM','X8.00.PM','X9.00.PM','X10.00.PM','X11.00.PM','X00.00.AM','X00.00.PM')
+March_18_dat &lt;- March_18_dat %&gt;% select(Detector_ID,Metric,Date,Date_Posixct,filename,everything())</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Melt the data</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuTWFyY2hfMThfbWVsdCA8LSBtZWx0KE1hcmNoXzE4X2RhdCxpZC52YXJzID0gYygnRGV0ZWN0b3JfSUQnLCdNZXRyaWMnLCdEYXRlJywnRGF0ZV9Qb3NpeGN0JywnZmlsZW5hbWUnKSx2YXJpYWJsZS5uYW1lID0gXCJUaW1lXCIsdmFsdWUubmFtZSA9ICdWb2x1bWUnKVxuYGBgIn0= -->
+<pre class="r"><code>March_18_melt &lt;- melt(March_18_dat,id.vars = c('Detector_ID','Metric','Date','Date_Posixct','filename'),variable.name = &quot;Time&quot;,value.name = 'Volume')</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Create Date_Time variable</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuI3JlbW92ZSBYXG5NYXJjaF8xOF9tZWx0JFRpbWUgPC0gZ3N1YignWCcsJycsTWFyY2hfMThfbWVsdCRUaW1lKVxuTWFyY2hfMThfbWVsdCREYXRlX1RpbWUgPC0gYXMuUE9TSVhjdChwYXN0ZShNYXJjaF8xOF9tZWx0JERhdGUsTWFyY2hfMThfbWVsdCRUaW1lKSxmb3JtYXQ9XCIlWS8lbS8lZCAlSS4lTS4lcFwiKVxuYGBgIn0= -->
+<pre class="r"><code>#remove X
+March_18_melt$Time &lt;- gsub('X','',March_18_melt$Time)
+March_18_melt$Date_Time &lt;- as.POSIXct(paste(March_18_melt$Date,March_18_melt$Time),format=&quot;%Y/%m/%d %I.%M.%p&quot;)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Filter to the PM Peak hours, 2pm to 7pm.</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIlIgTm90ZWJvb2siDQpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sNCi0tLQ0KDQpUaGlzIGlzIGFuIFtSIE1hcmtkb3duXShodHRwOi8vcm1hcmtkb3duLnJzdHVkaW8uY29tKSBOb3RlYm9vay4gV2hlbiB5b3UgZXhlY3V0ZSBjb2RlIHdpdGhpbiB0aGUgbm90ZWJvb2ssIHRoZSByZXN1bHRzIGFwcGVhciBiZW5lYXRoIHRoZSBjb2RlLiANCg0KVHJ5IGV4ZWN1dGluZyB0aGlzIGNodW5rIGJ5IGNsaWNraW5nIHRoZSAqUnVuKiBidXR0b24gd2l0aGluIHRoZSBjaHVuayBvciBieSBwbGFjaW5nIHlvdXIgY3Vyc29yIGluc2lkZSBpdCBhbmQgcHJlc3NpbmcgKkN0cmwrU2hpZnQrRW50ZXIqLiANCg0KYGBge3J9DQpwbG90KGNhcnMpDQpgYGANCg0KQWRkIGEgbmV3IGNodW5rIGJ5IGNsaWNraW5nIHRoZSAqSW5zZXJ0IENodW5rKiBidXR0b24gb24gdGhlIHRvb2xiYXIgb3IgYnkgcHJlc3NpbmcgKkN0cmwrQWx0K0kqLg0KDQpXaGVuIHlvdSBzYXZlIHRoZSBub3RlYm9vaywgYW4gSFRNTCBmaWxlIGNvbnRhaW5pbmcgdGhlIGNvZGUgYW5kIG91dHB1dCB3aWxsIGJlIHNhdmVkIGFsb25nc2lkZSBpdCAoY2xpY2sgdGhlICpQcmV2aWV3KiBidXR0b24gb3IgcHJlc3MgKkN0cmwrU2hpZnQrSyogdG8gcHJldmlldyB0aGUgSFRNTCBmaWxlKS4NCg0KVGhlIHByZXZpZXcgc2hvd3MgeW91IGEgcmVuZGVyZWQgSFRNTCBjb3B5IG9mIHRoZSBjb250ZW50cyBvZiB0aGUgZWRpdG9yLiBDb25zZXF1ZW50bHksIHVubGlrZSAqS25pdCosICpQcmV2aWV3KiBkb2VzIG5vdCBydW4gYW55IFIgY29kZSBjaHVua3MuIEluc3RlYWQsIHRoZSBvdXRwdXQgb2YgdGhlIGNodW5rIHdoZW4gaXQgd2FzIGxhc3QgcnVuIGluIHRoZSBlZGl0b3IgaXMgZGlzcGxheWVkLg0K</div>
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIlIgTm90ZWJvb2siDQpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sNCi0tLQ0KDQpTZXQgd29ya2luZyBkaXJlY3RvcnkgYW5kIGxvYWQgbmVjZXNzYXJ5IHBhY2thZ2VzLg0KDQpgYGB7ciBzZXR1cCwgaW5jbHVkZT1GQUxTRX0NCmtuaXRyOjpvcHRzX2tuaXQkc2V0KHJvb3QuZGlyID0gIkg6L1Byb2plY3RzLzExMDAwLzExMTU1L1RyYWZmU3R1ZHkvRGF0YUNvbGxlY3Rpb24vRnJlZXdheURhdGEvRGV0ZWN0b3IgRGF0YS9Wb2x1bWUgRGF0YSIpDQoNCiMjYmVsb3cgYXJlIGEgbGlzdCBvZiBwYWNrYWdlcyByZXF1aXJlZCB0byBydW4gdGhlIG1hcmtkb3duIGZpbGUNCmxpYnJhcnkodGlkeXZlcnNlKQ0KbGlicmFyeShsdWJyaWRhdGUpDQpsaWJyYXJ5KGdyaWRFeHRyYSkNCmxpYnJhcnkocmVzaGFwZTIpDQpsaWJyYXJ5KHpvbykNCmxpYnJhcnkocmdkYWwpDQpsaWJyYXJ5KGltcHV0ZVRTKQ0KYGBgDQoNCkxvYWQgdGhlIGRhdGEgZm9yIE1hcmNoLiBMb2FkIGVhY2ggZmlsZQ0KDQpgYGB7ciBleHBsb3JlIE1hcmNofQ0KDQpkaXIoJy4vTWFyY2ggMTgnKQ0KDQpgYGANCg0KYGBge3IgbG9hZCBkYXRhIGZvciBNYXJjaH0NCnBhdGggPC0gJy4vTWFyY2ggMTgnDQoNCiMjIyBsaXN0IG91dCBhbGwgdGhlIGNzdiBmaWxlcyB0aGF0IHN0YXJ0IHdpdGggVFRfIGFuZCB0aGVuIGhhdmUgYSBudW1iZXIuIFRoaXMgd2lsbCBhdm9pZCBsb2FkaW5nIGluIHRoZSB1bndhbnRlZCBhZ2dyZWdhdGVkIGZpbGVzIG9yIFZNVCBmaWxlcy4NCiMjIydeX1xcZC4nIHJldHVybnMgYWxsIGZpbGVzIHRoYXQgZW5kIHdpdGggX3NvbWVfZGlnaXQuY3N2Lg0KbGlzdF9jc3YgPC0gZGlyKHBhdGg9cGF0aCxwYXR0ZXJuID0gJypfXFxkLmNzdicpDQoNCm15ZmlsZXMgPC0gbGFwcGx5KHBhc3RlKHBhdGgsJy8nLGxpc3RfY3N2LHNlcD0nJyksDQogICAgICAgICAgICAgICAgICBmdW5jdGlvbih4KSByZWFkLmNzdih4LHN0cmluZ3NBc0ZhY3RvcnMgPSBGQUxTRSkpDQoNCmZpbGVzIDwtIG1hcHBseShjYmluZCxteWZpbGVzLCdmaWxlbmFtZScgPSBsaXN0X2NzdixTSU1QTElGWSA9IEYpDQoNCmRhdCA8LSBiaW5kX3Jvd3MoZmlsZXMpDQoNCiNjcmVhdGUgYSBkYXRhc2V0IHRoYXQgd2Ugd2lsbCBlZGl0Li4uLg0KTWFyY2hfMThfZGF0IDwtIGRhdA0KYGBgDQoNCg0KDQpgYGB7ciBleGFtaW5lIGNvbHVtbnN9DQoNCmNvbG5hbWVzKE1hcmNoXzE4X2RhdCkNCmBgYA0KDQpMZXRzIGZpeCB0aGUgY29sdW1uIGhlYWRlcnMgZmlyc3QuIFRoZXJlIGFyZSBubyBoZWFkZXJzIGZvciB0aGUgZmlyc3QgMyBjb2x1bW5zIGFuZCBhbHNvIHRoZXJlIGFwcGVhcnMgdG8gYmUgYSBjb2x1bW4gYXQgdGhlIGVuZCBvZiB0aGUgZGF0YSBmcmFtZSAiWC4zIg0KDQpgYGB7ciBzdXltbWFyeSBvZiBkYXRhc2V0fQ0Kc3VtbWFyeShNYXJjaF8xOF9kYXQkWC4zKQ0KYGBgDQoNCkFsbCBOQXMuLi4uIHJlbW92ZS4NCg0KYGBge3IgcmVtb3ZlIGJsYW5rIGxhc3QgY29sdW1ufQ0KDQpNYXJjaF8xOF9kYXQgPC0gTWFyY2hfMThfZGF0WywhbmFtZXMoTWFyY2hfMThfZGF0KSA9PSAiWC4zIl0NCg0KYGBgDQoNCkZvY3VzIG9uIHRoZSBmaXJzdCB0aHJlZSBjb2x1bW5zDQoNCmBgYHtyIGV4YW1pbmUgZmlyc3QgMyByb3dzfQ0Kc3RyKE1hcmNoXzE4X2RhdFsxOjNdKQ0KYGBgDQoNCkNvbHVtbiAxIGlzIHRoZSBkZXRlY3RvciBJRA0KQ29sdW1uIDIgaXMgdGhlIG1ldHJpYw0KQ29sdW1uIDMgaXMgdGhlIGRhdGUuDQoNCg0KYGBge3IgY2hhbmdlIGZpcnN0IDMgY29sdW1uIG5hbWVzfQ0KDQpjb2xuYW1lcyhNYXJjaF8xOF9kYXQpWzE6M10gPC0gYygnRGV0ZWN0b3JfSUQnLCdNZXRyaWMnLCdEYXRlJykNCg0KYGBgDQoNCk5vdyBsZXRzIGNoYW5nZSB0aGUgZGF0YSB0eXBlcyBpbiB0aGUgY29sdW1ucw0KDQpgYGB7ciBtZXRyaWMgYW5kIERhdGVfcG9zaXhjdH0NCg0KTWFyY2hfMThfZGF0JE1ldHJpYyA8LSBhcy5mYWN0b3IoTWFyY2hfMThfZGF0JE1ldHJpYykNCk1hcmNoXzE4X2RhdCREYXRlX1Bvc2l4Y3QgPC0gYXMuUE9TSVhjdChNYXJjaF8xOF9kYXQkRGF0ZSxmb3JtYXQ9IiVZLyVtLyVkIikNCg0KIyMgQ2hlY2sgdGhhdCBvdXIgZGF0ZXMgd29ya2VkIG91dC4gV2UgZG9uJ3Qgd2FudCBhbnkgTkFzLg0KdGFibGUoTWFyY2hfMThfZGF0JERhdGVfUG9zaXhjdCkNCg0KYGBgDQoNClRoZXJlIG5vb24gYW5kIG1pZG5pZ2h0IGFyZSBsYWJlbGxlZCBhcyBzdHJpbmdzLiBUaGUgcmVzdCBvZiB0aGUgY29sdW1ucyBhcmUgbGFiZWxsZWQgYXMgdGltZXMgZm9ybWF0cyAoaW4gc3RyaW5ncykuIExldHMgY2hhbmdlIG5vb24gYW5kIG1pZG5pZ2h0IHRvIHRoZSBzYW1lIGZvcm1hdCBhcyB0aGUgb3RoZXIgdGltZXMuDQoNCmBgYHtyIGNoYW5nZSBub29uIG1pZG5pZ2h0IG5hbWVzfQ0KDQpjb2xuYW1lcyhNYXJjaF8xOF9kYXQpW2NvbG5hbWVzKE1hcmNoXzE4X2RhdCklaW4lDQogICAgICAgICAgICAgICAgICAgICAgICAgYygnWDEuQU0nLCdYMi5BTScsJ1gzLkFNJywnWDQuQU0nLCdYNS5BTScsJ1g2LkFNJywNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICdYNy5BTScsJ1g4LkFNJywnWDkuQU0nLCdYMTAuQU0nLCdYMTEuQU0nLA0KICAgICAgICAgICAgICAgICAgICAgICAgICAgJ1gxLlBNJywnWDIuUE0nLCdYMy5QTScsJ1g0LlBNJywnWDUuUE0nLCdYNi5QTScsDQogICAgICAgICAgICAgICAgICAgICAgICAgICAnWDcuUE0nLCdYOC5QTScsJ1g5LlBNJywnWDEwLlBNJywnWDExLlBNJywnTm9vbicsJ01pZG5pZ2h0JyldIDwtDQogIGMoJ1gxLjAwLkFNJywnWDIuMDAuQU0nLCdYMy4wMC5BTScsJ1g0LjAwLkFNJywnWDUuMDAuQU0nLCdYNi4wMC5BTScsDQogICAgJ1g3LjAwLkFNJywnWDguMDAuQU0nLCdYOS4wMC5BTScsJ1gxMC4wMC5BTScsJ1gxMS4wMC5BTScsDQogICAgJ1gxLjAwLlBNJywnWDIuMDAuUE0nLCdYMy4wMC5QTScsJ1g0LjAwLlBNJywnWDUuMDAuUE0nLCdYNi4wMC5QTScsDQogICAgJ1g3LjAwLlBNJywnWDguMDAuUE0nLCdYOS4wMC5QTScsJ1gxMC4wMC5QTScsJ1gxMS4wMC5QTScsJ1gwMC4wMC5BTScsJ1gwMC4wMC5QTScpDQoNCk1hcmNoXzE4X2RhdCA8LSBNYXJjaF8xOF9kYXQgJT4lIHNlbGVjdChEZXRlY3Rvcl9JRCxNZXRyaWMsRGF0ZSxEYXRlX1Bvc2l4Y3QsZmlsZW5hbWUsZXZlcnl0aGluZygpKQ0KDQpgYGANCg0KTWVsdCB0aGUgZGF0YQ0KDQpgYGB7ciBtZWx0fQ0KDQpNYXJjaF8xOF9tZWx0IDwtIG1lbHQoTWFyY2hfMThfZGF0LGlkLnZhcnMgPSBjKCdEZXRlY3Rvcl9JRCcsJ01ldHJpYycsJ0RhdGUnLCdEYXRlX1Bvc2l4Y3QnLCdmaWxlbmFtZScpLHZhcmlhYmxlLm5hbWUgPSAiVGltZSIsdmFsdWUubmFtZSA9ICdWb2x1bWUnKQ0KDQpgYGANCg0KQ3JlYXRlIERhdGVfVGltZSB2YXJpYWJsZQ0KDQpgYGB7ciBEYXRlX1RpbWV9DQoNCiNyZW1vdmUgWA0KTWFyY2hfMThfbWVsdCRUaW1lIDwtIGdzdWIoJ1gnLCcnLE1hcmNoXzE4X21lbHQkVGltZSkNCg0KTWFyY2hfMThfbWVsdCREYXRlX1RpbWUgPC0gYXMuUE9TSVhjdChwYXN0ZShNYXJjaF8xOF9tZWx0JERhdGUsTWFyY2hfMThfbWVsdCRUaW1lKSxmb3JtYXQ9IiVZLyVtLyVkICVJLiVNLiVwIikNCg0KYGBgDQoNCkZpbHRlciB0byB0aGUgUE0gUGVhayBob3VycywgMnBtIHRvIDdwbS4NCg0KYGBge3J9DQoNClBNX1BlYWsgPC0gYygxNDoxOSkNCg0KTWFyY2hfMThfbWVsdF9QTV9QZWFrIDwtIE1hcmNoXzE4X21lbHRbaG91cnMoTWFyY2hfMThfbWVsdCREYXRlX1RpbWUpJWluJVBNX1BlYWssXQ0KDQpgYGANCg0KDQo=</div>
 
 
 
