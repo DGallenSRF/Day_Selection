@@ -16,6 +16,8 @@ library(reshape2)
 library(zoo)
 library(rgdal)
 library(imputeTS)
+library(xts)
+library(dygraphs)
 ```
 
 Load the data for March. Load each file
@@ -26,7 +28,7 @@ dir('./March 18')
 
 ```
 
-```{r load data for March}
+```{r load data for March,warning=FALSE}
 path <- './March 18'
 
 ### list out all the csv files that start with TT_ and then have a number. This will avoid loading in the unwanted aggregated files or VMT files.
@@ -161,23 +163,68 @@ tail(var)
 
 Lets pick Detector 70. We want to create a variable for each day and them average the volumes for each day.
 
+We also only want Tuesday, Wednesday and Thursday. 
+
 ```{r det_70}
 
 Det_70 <-  March_18_melt_PM_Peak %>%
   filter(Detector_ID==70)%>%
   filter(Metric=="Volume")%>%
-  mutate(YearDay=yday(Date_Time))%>%
-  group_by(YearDay)%>%
-  summarise(AvgVol = mean(Metric_value))
+  mutate(YearDay=yday(Date_Time),
+         Weekday=weekdays(Date_Time,abbreviate=TRUE))%>%
+  # filter(Weekday %in% c('Tue','Wed','Thu'))%>%
+  group_by(Date_Posixct)%>%
+  summarise(AvgVol = log(sum(Metric_value)))
 
 head(Det_70)
 ```
+
+
 
 ##Time Series
 
 Now we create a time series for the data
 
-```{r Time Series}
+```{r Time Series,fig.width=9,fig.height=5}
 
+Det_70_ts_xts <- xts(Det_70$AvgVol,order.by = Det_70$Date_Posixct)
+
+dygraph(xts(Det_70$AvgVol,order.by = Det_70$Date_Posixct))%>%
+  dySeries(label = 'Average Vol.')%>%
+  dyRangeSelector()
+```
+
+```{r decompose data}
+Det_70_ts <- ts(Det_70$AvgVol,frequency=7)
+
+Det_70_ts_deomp <- decompose(Det_70_ts)
+
+Det_70_ts_stl <- stl(Det_70_ts,s.window = 'periodic')
+
+day_select <-  cbind(data.frame(Det_70_ts_stl$time.series[,1:3]),Date=Det_70$Date_Posixct,Weekday=weekdays(Det_70$Date_Posixct))%>%
+  mutate(Resid = abs(remainder))%>%
+  filter(Weekday %in% c('Tuesday','Wednesday','Thursday'))%>%
+  arrange(Resid)%>%
+  print()
+
+day_select$Date[day_select$remainder==median(day_select$remainder)]
+```
+
+Day selection is `r medipaste(day_select$Weekday[1],day_select$Date[1])`.
+
+Show plots of volumes by day
+
+
+```{r}
+March_18_melt_PM_Peak %>%
+  mutate(Weekday = weekdays(Date_Time,abbreviate=TRUE),
+         YearDay=yday(Date_Time),
+         MonthDay=day(Date_Time),
+         HourMin = as.numeric(format(Date_Time,"%H.%M")))%>%
+  filter(Metric=='Volume')%>%
+  filter(Detector_ID==70)%>%
+  ggplot(aes(x=HourMin,y=Metric_value))+
+  geom_point()+
+  geom_smooth()+facet_wrap(~MonthDay,nrow=4)
 ```
 
