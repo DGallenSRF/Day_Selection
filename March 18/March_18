@@ -1,0 +1,93 @@
+<?xml version="1.0"?>
+<datarequest>
+	<calendar date="1" month="3" year="2018"/>
+	<calendar date="2" month="3" year="2018"/>
+	<calendar date="3" month="3" year="2018"/>
+	<calendar date="4" month="3" year="2018"/>
+	<calendar date="5" month="3" year="2018"/>
+	<calendar date="6" month="3" year="2018"/>
+	<calendar date="7" month="3" year="2018"/>
+	<calendar date="8" month="3" year="2018"/>
+	<calendar date="9" month="3" year="2018"/>
+	<calendar date="10" month="3" year="2018"/>
+	<calendar date="11" month="3" year="2018"/>
+	<calendar date="12" month="3" year="2018"/>
+	<calendar date="13" month="3" year="2018"/>
+	<calendar date="14" month="3" year="2018"/>
+	<calendar date="15" month="3" year="2018"/>
+	<calendar date="16" month="3" year="2018"/>
+	<calendar date="17" month="3" year="2018"/>
+	<calendar date="18" month="3" year="2018"/>
+	<calendar date="19" month="3" year="2018"/>
+	<calendar date="20" month="3" year="2018"/>
+	<calendar date="21" month="3" year="2018"/>
+	<calendar date="22" month="3" year="2018"/>
+	<calendar date="23" month="3" year="2018"/>
+	<calendar date="24" month="3" year="2018"/>
+	<calendar date="25" month="3" year="2018"/>
+	<calendar date="26" month="3" year="2018"/>
+	<calendar date="27" month="3" year="2018"/>
+	<calendar date="28" month="3" year="2018"/>
+	<calendar date="29" month="3" year="2018"/>
+	<calendar date="30" month="3" year="2018"/>
+	<calendar date="31" month="3" year="2018"/>
+	<timerange begin="0" end="2880" smoothing="30"/>
+	<sensor id="1180"/>
+	<sensor id="1181"/>
+	<sensor id="1182"/>
+	<sensor id="1183"/>
+	<sensor id="1184"/>
+	<sensor id="1185"/>
+	<sensor id="1186"/>
+	<sensor id="1187"/>
+	<sensor id="1188"/>
+	<sensor id="1189"/>
+	<sensor id="1190"/>
+	<sensor id="1191"/>
+	<sensor id="1192"/>
+	<sensor id="1193"/>
+	<sensor id="1194"/>
+	<sensor id="1195"/>
+	<sensor id="1196"/>
+	<sensor id="1197"/>
+	<sensor id="1217"/>
+	<sensor id="1218"/>
+	<sensor id="1219"/>
+	<sensor id="1220"/>
+	<sensor id="1221"/>
+	<sensor id="1222"/>
+	<sensor id="1223"/>
+	<sensor id="1224"/>
+	<sensor id="1225"/>
+	<sensor id="1226"/>
+	<sensor id="1227"/>
+	<sensor id="1228"/>
+	<sensor id="1229"/>
+	<sensor id="1230"/>
+	<sensor id="1231"/>
+	<sensor id="1232"/>
+	<sensor id="1233"/>
+	<sensor id="1234"/>
+	<sensor id="1235"/>
+	<sensor id="1236"/>
+	<sensor id="1237"/>
+	<sensor id="1238"/>
+	<sensor id="235"/>
+	<sensor id="3324"/>
+	<sensor id="4158"/>
+	<sensor id="5666"/>
+	<sensor id="5667"/>
+	<sensor id="5668"/>
+	<sensor id="5690"/>
+	<sensor id="5691"/>
+	<sensor id="5692"/>
+	<sensor id="5693"/>
+	<sensor id="6298"/>
+	<dataset id='Density'/>
+	<dataset id='Speed'/>
+	<dataset id='Volume'/>
+	<output format='CompositeFile' path='\\VS-MPLS1\ProjData\Projects\11000\11155\TraffStudy\DataCollection\FreewayData\Detector Data\Raw detector data\March 18\' time='Rows'>
+		<option name='Values'/>
+		<file name='March_1'/>
+	</output>
+</datarequest>
