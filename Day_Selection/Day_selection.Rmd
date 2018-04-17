@@ -116,7 +116,7 @@ Melt the data
 
 ```{r melt}
 
-March_18_melt <- melt(March_18_dat,id.vars = c('Detector_ID','Metric','Date','Date_Posixct','filename'),variable.name = "Time",value.name = 'Volume')
+March_18_melt <- melt(March_18_dat,id.vars = c('Detector_ID','Metric','Date','Date_Posixct','filename'),variable.name = "Time",value.name = 'Metric_value')
 
 ```
 
@@ -129,16 +129,55 @@ March_18_melt$Time <- gsub('X','',March_18_melt$Time)
 
 March_18_melt$Date_Time <- as.POSIXct(paste(March_18_melt$Date,March_18_melt$Time),format="%Y/%m/%d %I.%M.%p")
 
+March_18_melt$Hour <- hour(March_18_melt$Date_Time)
+
 ```
 
 Filter to the PM Peak hours, 2pm to 7pm.
 
-```{r}
+```{r Peak Hours}
 
 PM_Peak <- c(14:19)
 
-March_18_melt_PM_Peak <- March_18_melt[hours(March_18_melt$Date_Time)%in%PM_Peak,]
+March_18_melt_PM_Peak <- March_18_melt %>%
+  filter(Hour>=14)%>%
+  filter(Hour<=19)
 
 ```
 
+Lets find what detectors have bad values. 
+
+```{r bad values}
+
+var <- March_18_melt_PM_Peak %>% 
+  group_by(Detector_ID)%>%
+  summarise(NAs =sum(Metric_value<0))%>%
+  arrange(NAs)
+  
+head(var)
+tail(var)
+
+```
+
+Lets pick Detector 70. We want to create a variable for each day and them average the volumes for each day.
+
+```{r det_70}
+
+Det_70 <-  March_18_melt_PM_Peak %>%
+  filter(Detector_ID==70)%>%
+  filter(Metric=="Volume")%>%
+  mutate(YearDay=yday(Date_Time))%>%
+  group_by(YearDay)%>%
+  summarise(AvgVol = mean(Metric_value))
+
+head(Det_70)
+```
+
+##Time Series
+
+Now we create a time series for the data
+
+```{r Time Series}
+
+```
 
