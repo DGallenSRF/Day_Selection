@@ -14,12 +14,13 @@ library(lubridate)
 library(gridExtra)
 library(reshape2)
 library(zoo)
-library(rgdal)
 library(imputeTS)
 library(xts)
 library(dygraphs)
 library(d3heatmap)
 library(ggthemes)
+library(plotly)
+
 ```
 
 Load the data for March. Load each file
@@ -43,6 +44,8 @@ myfiles <- lapply(paste(path,'/',list_csv,sep=''),
 files <- mapply(cbind,myfiles,'filename' = list_csv,SIMPLIFY = F)
 
 dat <- bind_rows(files)
+
+rm(myfiles,files)
 
 #create a dataset that we will edit....
 March_18_dat <- dat
@@ -152,16 +155,20 @@ March_18_melt_PM_Peak <- March_18_melt %>%
 
 Lets find what detectors have bad values. 
 
-```{r bad values}
+```{r NA values}
 
 var <- March_18_melt_PM_Peak %>% 
   group_by(Detector_ID)%>%
   summarise(NAs =sum(Metric_value<0))%>%
-  arrange(NAs)
+  arrange(NAs)%>%
+  filter(NAs==0)%>%
+  droplevels()
   
-var
+no_NAs <- as.vector(var$Detector_ID)
 
 ```
+
+##Time Series
 
 Lets pick Detector 70. We want to create a variable for each day and them average the volumes for each day.
 
@@ -181,9 +188,6 @@ Det_70 <-  March_18_melt_PM_Peak %>%
 head(Det_70)
 ```
 
-
-
-##Time Series
 
 Now we create a time series for the data
 
@@ -222,6 +226,8 @@ FM_TS_F$Date[FM_TS_F$remainder==median(FM_TS_F$remainder)]
 
 Day selection is `r paste(day_select$Weekday[1],day_select$Date[1])`.
 
+## Correlation
+
 Show plots of volumes by day
 
 ```{r plot values}
@@ -243,23 +249,32 @@ Create detector ~ day matrix
 
 ```{r heatmap for subset,fig.width=11}
 
-levels <- first(levels(March_18_melt_PM_Peak$Detector_ID),100)
+levels <- last(levels(March_18_melt_PM_Peak$Detector_ID),100)
 
 matrix <- March_18_melt_PM_Peak %>%
   mutate(Weekday = weekdays(Date_Time,abbreviate=TRUE),
          YearDay=yday(Date_Time),
          MonthDay=day(Date_Time),
-         HourMin = as.numeric(format(Date_Time,"%H.%M")))%>%
+         HourMin = as.numeric(format(Date_Time,"%H"))+
+           as.numeric(format(Date_Time,"%M"))/60)%>%
   filter(Metric=='Volume')%>%
   filter(Detector_ID %in% levels)%>%
-  group_by(Detector_ID,Date_Posixct)%>%
-  summarise(SumVol = sum(Metric_value))%>%
-  arrange(Date_Posixct)%>%
-  spread(Date_Posixct,SumVol)
+  filter(Detector_ID %in% no_NAs)%>%
+  group_by(Date_Posixct,Detector_ID)%>%
+  arrange(Date_Time)%>%
+  mutate(cumSum = cumsum(Metric_value))%>%
+  mutate(correlation = lm(cumSum~HourMin)$coefficients[2])%>%
+  arrange(Date_Posixct)
 
 
-vector <- as.character(matrix$Detector_ID)
-matrix2 <- matrix[,-1] %>% as.data.frame()
+matrix_spread <- matrix%>%
+  group_by(Date_Posixct,Detector_ID)%>%
+  summarise(correlation=first(correlation))%>%
+  spread(Date_Posixct,correlation)
+
+
+vector <- as.character(matrix_spread$Detector_ID)
+matrix2 <- matrix_spread[,-1] %>% as.data.frame()
 rownames(matrix2) <- vector
 d3heatmap(matrix2,scale = 'row',Colv = 'as-is',colors = 'Blues')
 ```
@@ -292,5 +307,48 @@ ggplot(day_SDev) +
   theme(axis.title.x = element_text(vjust=-0.5), axis.title.y = element_text(vjust=1))
 
 ```
+
+Cumulative running total
+
+```{r cumsum, fig.width=9}
+
+g <- March_18_melt_PM_Peak %>%
+  mutate(Weekday = weekdays(Date_Time,abbreviate=TRUE),
+         YearDay=yday(Date_Time),
+         MonthDay=day(Date_Time),
+         HourMin = as.numeric(format(Date_Time,"%H"))+
+           as.numeric(format(Date_Time,"%M"))/60)%>%
+  filter(Detector_ID==7105 & Metric=='Volume')%>%
+  # filter(YearDay==65 & Metric=='Volume')%>%
+  # filter(Detector_ID %in% no_NAs)%>%
+  # filter(Metric=='Volume')%>%
+  droplevels()%>%
+  group_by(YearDay)%>%
+  arrange(YearDay,HourMin)%>%
+  # group_by(Detector_ID,Date_Posixct)%>%
+  mutate(cumSum = cumsum(Metric_value),
+         correlation=lm(cumSum~HourMin)$coefficients[2])
+
+h <- g%>%
+  group_by(Date_Posixct)%>%
+  summarise(Correlation=first(correlation))%>%
+  mutate(wday = weekdays(Date_Posixct))%>%
+  arrange(Date_Posixct)
+
+plot <- ggplot(g) + 
+  geom_line(aes(x=HourMin,y=cumSum,group=Date_Posixct,color=Weekday)) + 
+  # geom_rug(aes(x=HourMin,y=cumSum)) + 
+  # geom_smooth(aes(x=HourMin,y=diff))+
+  theme_tufte(ticks = F) +
+  xlab("Cumulative sum during peak hour") + 
+  ylab("CumSum") + 
+  theme(axis.title.x = element_text(vjust=-0.5), axis.title.y = element_text(vjust=1))  
+
+ggplotly(plot)
+
+cor(g$cumSum,g$HourMin)
+
+```
+
 
 
