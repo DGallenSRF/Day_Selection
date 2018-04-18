@@ -247,7 +247,7 @@ y <- March_18_melt_PM_Peak %>%
 
 Create detector ~ day matrix
 
-```{r heatmap for subset,fig.width=11}
+```{r heatmap for subset,fig.width=9}
 
 levels <- last(levels(March_18_melt_PM_Peak$Detector_ID),100)
 
@@ -276,7 +276,7 @@ matrix_spread <- matrix%>%
 vector <- as.character(matrix_spread$Detector_ID)
 matrix2 <- matrix_spread[,-1] %>% as.data.frame()
 rownames(matrix2) <- vector
-d3heatmap(matrix2,scale = 'row',Colv = 'as-is',colors = 'Blues')
+d3heatmap(matrix2,scale = 'column',Colv = 'as-is',colors = 'Blues')
 ```
 
 Cluster Days
@@ -318,7 +318,7 @@ g <- March_18_melt_PM_Peak %>%
          MonthDay=day(Date_Time),
          HourMin = as.numeric(format(Date_Time,"%H"))+
            as.numeric(format(Date_Time,"%M"))/60)%>%
-  filter(Detector_ID==7105 & Metric=='Volume')%>%
+  filter(Detector_ID==4069 & Metric=='Volume')%>%
   # filter(YearDay==65 & Metric=='Volume')%>%
   # filter(Detector_ID %in% no_NAs)%>%
   # filter(Metric=='Volume')%>%
@@ -346,7 +346,16 @@ plot <- ggplot(g) +
 
 ggplotly(plot)
 
-cor(g$cumSum,g$HourMin)
+plot2 <- ggplot(g) + 
+  geom_line(aes(x=HourMin,y=Metric_value,group=Date_Posixct,color=Weekday)) + 
+  # geom_rug(aes(x=HourMin,y=cumSum)) + 
+  # geom_smooth(aes(x=HourMin,y=diff))+
+  theme_tufte(ticks = F) +
+  xlab("Cumulative sum during peak hour") + 
+  ylab("CumSum") + 
+  theme(axis.title.x = element_text(vjust=-0.5), axis.title.y = element_text(vjust=1))  
+
+ggplotly(plot2)
 
 ```
 
