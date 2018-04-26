@@ -1,0 +1,60 @@
+Day_Selection
+========================================================
+author: 
+date: 
+autosize: true
+
+```{r}
+knitr::opts_knit$set(root.dir = "H:/Projects/11000/11155/TraffStudy/DataCollection/FreewayData/Detector Data/Volume Data")
+library(tidyverse)
+library(plotly)
+```
+
+
+First Slide
+========================================================
+
+For more details on authoring R presentations please visit <https://support.rstudio.com/hc/en-us/articles/200486468>.
+
+- Bullet 1
+- Bullet 2
+- Bullet 3
+
+Slide With Code
+========================================================
+
+```{r}
+summary(cars)
+```
+
+Slide With Plot
+========================================================
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+Slide With Plot
+========================================================
+
+```{r}
+dir()
+```
+
+
+
+```{r}
+
+g <-  read.csv('g.csv')
+plot <- ggplot(g) + 
+  geom_line(aes(x=HourMin,y=cumSum,group=Date_Posixct,color=cov)) + 
+  # geom_rug(aes(x=HourMin,y=cumSum)) + 
+  # geom_smooth(aes(x=HourMin,y=diff))+
+  # theme_tufte(ticks = F) +
+  xlab("Hour") + 
+  ylab("CumSum") + 
+  theme(axis.title.x = element_text(vjust=-0.5), axis.title.y = element_text(vjust=1))  
+
+ggplotly(plot)
+```
+

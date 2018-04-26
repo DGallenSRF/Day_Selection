@@ -20,12 +20,13 @@ library(dygraphs)
 library(d3heatmap)
 library(ggthemes)
 library(plotly)
-
+library(timetk)
+library(forecast)
 ```
 
 Load the data for March. Load each file and combine into one data set. We load and combine each file in `r getwd()`. We only want to load the files that end in "_#.csv".
 
-```{r explore March, echo=FALSE}
+```{r explore March}
 
 dir('./March 18')
 
@@ -33,7 +34,7 @@ dir('./March 18')
 
 
 
-```{r load data for March,warning=FALSE,echo=FALSE}
+```{r load data for March,warning=FALSE}
 path <- './March 18'
 
 ### list out all the csv files that start with TT_ and then have a number. This will avoid loading in the unwanted aggregated files or VMT files.
@@ -55,7 +56,7 @@ March_18_dat <- dat
 
 The column names in each file are also follows. 
 
-```{r examine columns, echo=FALSE}
+```{r examine columns}
 
 colnames(March_18_dat)
 ```
@@ -68,7 +69,7 @@ summary(March_18_dat$X.3)
 
 All NAs.... remove.
 
-```{r remove blank last column, echo=FALSE}
+```{r remove blank last column}
 
 March_18_dat <- March_18_dat[,!names(March_18_dat) == "X.3"]
 
@@ -76,7 +77,7 @@ March_18_dat <- March_18_dat[,!names(March_18_dat) == "X.3"]
 
 Focus on the first three columns;
 
-```{r examine first 3 rows,echo=FALSE}
+```{r examine first 3 rows}
 str(March_18_dat[1:3])
 ```
 
@@ -85,7 +86,7 @@ Column 2 is the metric.<br/>
 Column 3 is the date.<br/>
 
 
-```{r change first 3 column names, echo=FALSE}
+```{r change first 3 column names}
 
 colnames(March_18_dat)[1:3] <- c('Detector_ID','Metric','Date')
 
@@ -97,7 +98,7 @@ We create a correctly formatted date field from the 'Date' field.<br/>
 We label the field with displays the records type i.e. Density vs Speed vs Volume as 'Metric' and change it from a string to a factor field.<br/>
 We also change Detector_ID from a numeric field to a factor field.
 
-```{r metric and Date_posixct,echo=FALSE,include=FALSE}
+```{r metric and Date_posixct,include=FALSE}
 
 March_18_dat$Metric <- as.factor(March_18_dat$Metric)
 March_18_dat$Date_Posixct <- as.POSIXct(March_18_dat$Date,format="%Y/%m/%d")
@@ -118,7 +119,7 @@ colnames(March_18_dat)
 There noon and midnight are labelled as strings. The rest of the columns are labelled as times formats (in strings) but are also inconsistent in format. Lets change noon and midnight to the same format as the other times. We also want to create a uniform format across all the column names.
 
 
-```{r change noon midnight names,echo=FALSE}
+```{r change noon midnight names}
 
 colnames(March_18_dat)[colnames(March_18_dat)%in%
                          c('X1.AM','X2.AM','X3.AM','X4.AM','X5.AM','X6.AM',
@@ -137,7 +138,7 @@ March_18_dat <- March_18_dat %>% select(Detector_ID,Metric,Date,Date_Posixct,fil
 
 Melt the data. We want to change the data set from a wide format to a long format. Below are the top 6 rows.
 
-```{r melt,echo=FALSE}
+```{r melt}
 
 March_18_melt <- melt(March_18_dat,id.vars = c('Detector_ID','Metric','Date','Date_Posixct','filename'),variable.name = "Time",value.name = 'Metric_value')
 
@@ -146,7 +147,7 @@ head(March_18_melt)
 
 
 
-```{r Date_Time, echo=FALSE}
+```{r Date_Time}
 
 #remove X
 March_18_melt$Time <- gsub('X','',March_18_melt$Time)
@@ -183,20 +184,34 @@ var <- March_18_melt_PM_Peak %>%
   droplevels()
   
 no_NAs <- as.vector(var$Detector_ID)
-no_NAs
+
+day_spread <- March_18_melt_PM_Peak %>%
+  group_by(Date_Posixct,Detector_ID)%>%
+  # summarise(correlation=first(correlation))%>%
+  summarise(NAs=sum(Metric_value<0))%>%
+  # summarise(cov=first(cov))%>%
+  spread(Date_Posixct,NAs)
+
+
 ```
 
 There are `r length(no_NAs)` detectors that do not contain a -1 value.
 
 ##Time Series
 
+```{r}
+midweek <- c('Tuesday','Wednesday','Thursday')
+midwk <- c('Tue','Wed','Thur')
+```
+
+
 Lets pick Detector 70. We want to create a variable for each day and them sum the volumes for each day.
 
 
-```{r det_70,echo=FALSE}
+```{r det}
 
-Det_70 <-  March_18_melt_PM_Peak %>%
-  filter(Detector_ID==150)%>%
+Det <-  March_18_melt_PM_Peak %>%
+  filter(Detector_ID==70)%>%
   filter(Metric=="Volume")%>%
   mutate(YearDay=yday(Date_Time),
          Weekday=weekdays(Date_Time,abbreviate=TRUE))%>%
@@ -204,46 +219,108 @@ Det_70 <-  March_18_melt_PM_Peak %>%
   group_by(Date_Posixct)%>%
   summarise(SumVol = sum(Metric_value))
 
-head(Det_70)
+head(Det)
 ```
 
 
 Now we create a time series for the data.
 
-```{r Time Series,fig.width=9,fig.height=5,echo=FALSE}
+```{r Time Series,fig.width=9,fig.height=5}
 
-Det_70_ts_xts <- xts(Det_70$SumVol,order.by = Det_70$Date_Posixct)
+Det_ts_xts <- xts(Det$SumVol,order.by = Det$Date_Posixct)
 
-dygraph(xts(Det_70$SumVol,order.by = Det_70$Date_Posixct))%>%
+dygraph(xts(Det$SumVol,order.by = Det$Date_Posixct))%>%
   dySeries(label = 'Total Vol.')%>%
   dyRangeSelector()
 ```
 
 We decompose the Time Series to extract the trend, seasonality and remainder from the time series. 
 
-```{r decompose data, echo=FALSE}
-Det_70_ts <- ts(Det_70$SumVol,frequency=3)
+```{r decompose data}
 
-Det_70_ts_deomp <- decompose(Det_70_ts)
+startW <- as.numeric(strftime(min(Det$Date_Posixct), format = "%W"))
+startD <- as.numeric(strftime(min(Det$Date_Posixct), format =" %w"))
 
-Det_70_ts_stl <- stl(Det_70_ts,s.window = 'periodic')
+Det_ts <- ts(Det$SumVol,frequency=7,start = c(startW,startD))
 
-midweek <- c('Tuesday','Wednesday','Thursday')
+Det_ts_deomp <- decompose(Det_ts)
 
-plot(Det_70_ts_stl)
+Det_ts_stlm <- stlm(Det_ts,s.window = 'periodic')
+# Det_ts_stl <- stl(Det_ts,s.window = 'periodic')
 
-day_select <-  cbind(data.frame(Det_70_ts_stl$time.series[,1:3]),Date=Det_70$Date_Posixct,Weekday=weekdays(Det_70$Date_Posixct))%>%
-  # mutate(Resid = abs(remainder))%>%
-  filter(Weekday %in% midweek)%>%
-  arrange(remainder)%>%
-  print()
+
+plot(Det_ts_stl)
+
+# sw_tidy_decomp(Det_ts_stl)
+sw_tidy_decomp(Det_ts_stlm)
+
+# day_select <-  cbind(data.frame(Det_ts_stl$time.series[,1:3]),Date=Det$Date_Posixct,Weekday=weekdays(Det$Date_Posixct))%>%
+#   # mutate(Resid = abs(remainder))%>%
+#   filter(Weekday %in% midweek)%>%
+#   arrange(remainder)
+
 
 ```
 
 
+We will create a time series for each detector and then look to find the 4 lowest residual days.
+
+```{r}
+March_18_sum <-  March_18_melt_PM_Peak %>%
+  filter(Metric=="Volume")%>%
+  mutate(YearDay=yday(Date_Time),
+         Weekday=weekdays(Date_Time,abbreviate=TRUE))%>%
+  # filter(Weekday %in% c('Tue','Wed','Thu'))%>%
+  group_by(Date_Posixct,Detector_ID)%>%
+  summarise(SumVol = sum(Metric_value))
+```
+
+```{r}
+
+March_18_sum_nest <- March_18_sum %>%
+  group_by(Detector_ID) %>%
+  # select(Detector_ID,SumVol) %>%
+  nest(.key = 'data.tbl')
+```
+
+```{r}
+
+startW <- as.numeric(week(min(March_18_melt_PM_Peak$Date_Posixct)))
+startD <- as.numeric(strftime(min(March_18_melt_PM_Peak$Date_Posixct), format ="%d"))
+
+March_18_sum_ts <- March_18_sum_nest %>%
+  mutate(data.ts = map(.x        = data.tbl,
+                       .f        = tk_ts,
+                       select    = -Date_Posixct,
+                       # start     = c(startW,startD),
+                       freq      = 7))
+
+March_18_sum_stl <-  March_18_sum_ts %>%
+  mutate(fit.stl = map(data.ts,stlm,s.window='periodic'))
+
+x <- March_18_sum_stl %>%
+  mutate(tidy = map(fit.stl, sw_tidy_decomp)) %>%
+  unnest(tidy, .drop=TRUE) %>%
+  # unnest(data.tbl, .drop = FALSE)%>%
+  mutate(day=round(index*7-7+1,0)) %>%
+  group_by(Detector_ID) %>%
+  mutate(rank = min_rank(abs(remainder)))
+
+dat_matrix <- dcast(x,day~rank)%>%rev()
+
+vector <- as.character(dat_matrix$day)
+dat_matrix2 <- dat_matrix[,-length(dat_matrix)] %>% as.data.frame()
+rownames(dat_matrix2) <- vector
+d3heatmap(dat_matrix2,scale = 'row',Rowv = FALSE,Colv = FALSE, colors = 'Blues',labCol = paste('#',colnames(dat_matrix2),sep=''))
+
+
+```
+
+
+
 Day selection is ?.
 
-## Correlation
+## Comparative Statitics
 
 Show plots of volumes by day
 
@@ -257,51 +334,18 @@ y <- March_18_melt_PM_Peak %>%
   filter(Detector_ID%in%c(147:151))%>%
   filter(Weekday %in% c('Tue','Wed','Thu'))
 
-  ggplot(y,aes(x=Metric_value,color=as.factor(Detector_ID)))+
-  geom_density()+facet_wrap(~MonthDay,nrow=4,scales = 'free_x')
+  ggplot(y,aes(x=HourMin,y=Metric_value,color=as.factor(Detector_ID)))+
+  geom_line()+facet_wrap(~MonthDay,nrow=4,scales = 'free_x')+ylab('Volume')+xlab('Hour')+
+    ggtitle('Volume per Day by Detector')
 ```
 
 
-Create detector ~ day heatmap. Each cell represents the covariance of the difference between each measurement. We have picked 100 detectors from the list for display purposes. All of the detectors shown do not contain any -1 values. 
+#### Standard Deviation of Volume per Day across all detectors
 
-```{r heatmap for subset,fig.width=9,echo=FALSE}
+We will sum the volumes for all dectectors over each day. We then will calculate the standard deviation of the volume sums. The plot below shows how the volumes across all detectors change over each day. <br/>
+Vertical line represent Sundays. 
 
-levels <- last(levels(March_18_melt_PM_Peak$Detector_ID),100)
-
-matrix <- March_18_melt_PM_Peak %>%
-  mutate(Weekday = weekdays(Date_Time,abbreviate=TRUE),
-         YearDay=yday(Date_Time),
-         MonthDay=day(Date_Time),
-         HourMin = as.numeric(format(Date_Time,"%H"))+
-           as.numeric(format(Date_Time,"%M"))/60)%>%
-  filter(Metric=='Volume')%>%
-  filter(Detector_ID %in% levels)%>%
-  filter(Detector_ID %in% no_NAs)%>%
-  group_by(Date_Posixct,Detector_ID)%>%
-  arrange(Date_Time)%>%
-  mutate(cumSum = cumsum(Metric_value))%>%
-  mutate(correlation = lm(cumSum~HourMin)$coefficients[2],
-         cov=cov(HourMin,cumSum))%>%
-  arrange(Date_Posixct)
-
-
-matrix_spread <- matrix%>%
-  group_by(Date_Posixct,Detector_ID)%>%
-  # summarise(correlation=first(correlation))%>%
-  summarise(Volume=sum(Metric_value))%>%
-  # summarise(cov=first(cov))%>%
-  spread(Date_Posixct,Volume)
-
-
-vector <- as.character(matrix_spread$Detector_ID)
-matrix2 <- matrix_spread[,-1] %>% as.data.frame()
-rownames(matrix2) <- vector
-d3heatmap(matrix2,scale = 'row',Colv = 'as-is',colors = 'Blues')
-```
-
-Cluster Days
-
-```{r}
+```{r standard deviation of volume}
 
 day_SDev <- March_18_melt_PM_Peak %>%
   mutate(Weekday = weekdays(Date_Time,abbreviate=TRUE),
@@ -322,11 +366,65 @@ ggplot(day_SDev) +
   geom_rug(aes(Date_Posixct,SDev)) + 
   geom_vline(xintercept = sundays,linetype='dotted') +
   theme_tufte(ticks = F) +
-  xlab("STD of the total volume across all Detectors") + 
-  ylab("Date") + 
+  xlab("Date") + 
+  ylab("Volume") +
+  ggtitle("Standard Deviation of the total volume across all Detectors\nDotted Line = Sundays")+
   theme(axis.title.x = element_text(vjust=-0.5), axis.title.y = element_text(vjust=1))
 
 ```
+
+#### Heatamp
+
+Create detector ~ day heatmap. Each cell represents the covariance between the time and the difference between each incremental volume measurement. We have picked 100 detectors from the list for display purposes. All of the detectors shown do not contain any -1 values. 
+
+```{r heatmap for subset,fig.width=9}
+
+levels <- last(levels(March_18_melt_PM_Peak$Detector_ID),100)
+
+matrix <- March_18_melt_PM_Peak %>%
+  mutate(Weekday = weekdays(Date_Time,abbreviate=TRUE),
+         YearDay=yday(Date_Time),
+         MonthDay=day(Date_Time),
+         HourMin = as.numeric(format(Date_Time,"%H"))+
+           as.numeric(format(Date_Time,"%M"))/60)%>%
+  filter(Metric=='Volume')%>%
+  group_by(Date_Posixct,Detector_ID)%>%
+  arrange(Date_Time)%>%
+  mutate(cumSum = cumsum(Metric_value))%>%
+  mutate(LinReg = lm(cumSum~HourMin)$coefficients[2],
+         covar=cov(HourMin,cumSum))%>%
+  arrange(Date_Posixct)
+
+
+matrix_sum <- matrix%>%
+  filter(Detector_ID %in% no_NAs)%>%
+  group_by(Date_Posixct,Detector_ID)%>%
+  # summarise(Volume=sum(Metric_value))%>%
+  summarise(Covar=first(covar))
+
+matrix_spread <- matrix_sum%>%
+  filter(Detector_ID %in% levels)%>%
+  spread(Date_Posixct,Covar)
+
+k <- matrix_sum%>%
+  filter(weekdays(Date_Posixct) %in% midweek)%>%
+  group_by(Date_Posixct)%>%
+  summarise(sum=sum(Covar))%>%
+  arrange(desc(sum))
+
+vector <- as.character(matrix_spread$Detector_ID)
+matrix2 <- matrix_spread[,-1] %>% as.data.frame()
+rownames(matrix2) <- vector
+d3heatmap(matrix2,scale = 'row',Colv = 'as-is',colors = 'Blues')
+```
+
+The total sum of the covariance for each detector on a given day is shown below (we are only showing Tue, Wed, Thur):
+
+```{r}
+k
+```
+
+
 
 Cumulative running total
 
@@ -362,7 +460,7 @@ h <- g%>%
 
 The below plot shows the cumulative summation of the peak hour volumes for each day in March 2018 for Detector 4069. The color scheme shows increasing covariance. Line to the bottom of the plot are Sundays and Saturdays.
 
-```{r plot cunsum,echo=FALSE}
+```{r plot cunsum, fig.width=9}
 plot <- ggplot(g) + 
   geom_line(aes(x=HourMin,y=cumSum,group=Date_Posixct,color=cov)) + 
   # geom_rug(aes(x=HourMin,y=cumSum)) + 
@@ -377,7 +475,7 @@ ggplotly(plot)
 
 The following plot displays straight volume across the peak hours for March for Detector 4069.
 
-```{r plot2   volume,echo=FALSE}
+```{r plot2   volume, fig.width=9}
 plot2 <- ggplot(g) + 
   geom_line(aes(x=HourMin,y=Metric_value,group=Date_Posixct,color=cov)) + 
   # geom_rug(aes(x=HourMin,y=cumSum)) + 

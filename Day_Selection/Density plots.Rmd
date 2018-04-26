@@ -1,0 +1,331 @@
+---
+title: "Density Plots 494"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = "H:/Projects/11000/11155/TraffStudy/DataCollection/FreewayData/Detector Data/Volume Data")
+
+##below are a list of packages required to run the markdown file
+library(tidyverse)
+library(lubridate)
+library(gridExtra)
+library(reshape2)
+library(zoo)
+library(imputeTS)
+library(xts)
+library(dygraphs)
+library(d3heatmap)
+library(ggthemes)
+library(plotly)
+library(timetk)
+library(forecast)
+```
+
+
+
+```{r load data for March,warning=FALSE,echo=FALSE}
+path <- './March 18'
+
+### list out all the csv files that start with TT_ and then have a number. This will avoid loading in the unwanted aggregated files or VMT files.
+###'^_\\d.' returns all files that end with _some_digit.csv.
+list_csv <- dir(path=path,pattern = '*_\\d.csv')
+
+myfiles <- lapply(paste(path,'/',list_csv,sep=''),
+                  function(x) read.csv(x,stringsAsFactors = FALSE))
+
+files <- mapply(cbind,myfiles,'filename' = list_csv,SIMPLIFY = F)
+
+dat <- bind_rows(files)
+
+rm(myfiles,files)
+
+#create a dataset that we will edit....
+March_18_dat <- dat
+```
+
+
+```{r remove blank last column,echo=FALSE}
+
+March_18_dat <- March_18_dat[,!names(March_18_dat) == "X.3"]
+
+```
+
+
+
+
+```{r change first 3 column names, echo=FALSE}
+
+colnames(March_18_dat)[1:3] <- c('Detector_ID','Metric','Date')
+
+```
+
+
+
+```{r metric and Date_posixct,include=FALSE, echo=FALSE}
+
+March_18_dat$Metric <- as.factor(March_18_dat$Metric)
+March_18_dat$Date_Posixct <- as.POSIXct(March_18_dat$Date,format="%Y/%m/%d")
+March_18_dat$Detector_ID <- as.factor(March_18_dat$Detector_ID)
+## Check that our dates worked out. We don't want any NAs.
+table(March_18_dat$Date_Posixct)
+
+```
+
+
+
+```{r change noon midnight names, echo=FALSE}
+
+colnames(March_18_dat)[colnames(March_18_dat)%in%
+                         c('X1.AM','X2.AM','X3.AM','X4.AM','X5.AM','X6.AM',
+                           'X7.AM','X8.AM','X9.AM','X10.AM','X11.AM',
+                           'X1.PM','X2.PM','X3.PM','X4.PM','X5.PM','X6.PM',
+                           'X7.PM','X8.PM','X9.PM','X10.PM','X11.PM','Noon','Midnight')] <-
+  c('X1.00.AM','X2.00.AM','X3.00.AM','X4.00.AM','X5.00.AM','X6.00.AM',
+    'X7.00.AM','X8.00.AM','X9.00.AM','X10.00.AM','X11.00.AM',
+    'X1.00.PM','X2.00.PM','X3.00.PM','X4.00.PM','X5.00.PM','X6.00.PM',
+    'X7.00.PM','X8.00.PM','X9.00.PM','X10.00.PM','X11.00.PM','X00.00.PM','X00.00.AM')
+
+March_18_dat <- March_18_dat %>% select(Detector_ID,Metric,Date,Date_Posixct,filename,everything())
+
+
+```
+
+
+```{r melt, echo=FALSE}
+
+March_18_melt <- melt(March_18_dat,id.vars = c('Detector_ID','Metric','Date','Date_Posixct','filename'),variable.name = "Time",value.name = 'Metric_value')
+
+```
+
+
+
+```{r Date_Time, echo=FALSE}
+
+#remove X
+March_18_melt$Time <- gsub('X','',March_18_melt$Time)
+
+March_18_melt$Date_Time <- as.POSIXct(paste(March_18_melt$Date,March_18_melt$Time),format="%Y/%m/%d %I.%M.%p")
+
+March_18_melt$Hour <- hour(March_18_melt$Date_Time)
+
+```
+
+
+
+```{r Peak Hours, echo=FALSE}
+
+PM_Peak <- c(14:19)
+
+March_18_melt_PM_Peak <- March_18_melt %>%
+  filter(Hour>=14)%>%
+  filter(Hour<=19)
+
+```
+
+
+
+```{r NA values, echo=FALSE}
+
+var <- March_18_melt_PM_Peak %>% 
+  group_by(Detector_ID)%>%
+  summarise(NAs =sum(Metric_value<0))%>%
+  arrange(NAs)%>%
+  filter(NAs==0)%>%
+  droplevels()
+  
+no_NAs <- as.vector(var$Detector_ID)
+
+day_spread <- March_18_melt_PM_Peak %>%
+  group_by(Date_Posixct,Detector_ID)%>%
+  # summarise(correlation=first(correlation))%>%
+  summarise(NAs=sum(Metric_value<0))%>%
+  # summarise(cov=first(cov))%>%
+  spread(Date_Posixct,NAs)
+
+
+```
+
+
+## Comparative Plots {.tabset .tabset-fade}
+
+Show plots of Density by day
+
+```{r cumsum, fig.width=9, echo=FALSE}
+
+plotDensity <- function(Detector,days){
+
+g <- March_18_melt %>%
+  mutate(Weekday = weekdays(Date_Time,abbreviate=TRUE),
+         YearDay=yday(Date_Time),
+         MonthDay=day(Date_Time),
+         HourMin = as.numeric(format(Date_Time,"%H"))+
+           as.numeric(format(Date_Time,"%M"))/60) %>%
+  filter(Detector_ID==Detector & Metric=='Density')  %>%
+  filter(MonthDay %in% days)
+
+
+plot2 <- ggplot(g) +
+  geom_line(aes(x=HourMin,y=Metric_value,color=as.factor(MonthDay))) +
+  # geom_rug(aes(x=HourMin,y=cumSum)) +
+  # geom_smooth(aes(x=HourMin,y=diff))+
+  theme_tufte(ticks = F) +
+  xlab("Hour") +
+  ylab("Density") +
+  theme(axis.title.x = element_text(vjust=-0.5), axis.title.y = element_text(vjust=1))
+
+ggplotly(plot2)
+}
+
+
+```
+
+```{r}
+marchMidweek <-  c(6,7,8,13,14,15,20,21,22,27,28,29)
+```
+
+###4155
+
+####4155
+```{r 4155,fig.width=9.5,fig.height=6,echo=FALSE}
+plotDensity(4155,marchMidweek)
+```
+
+
+###3338
+
+####3338
+```{r 3338,fig.width=9.5,fig.height=6,echo=FALSE}
+plotDensity(3338,marchMidweek)
+```
+
+###4068
+
+####4068
+```{r 4068,fig.width=9.5,fig.height=6,echo=FALSE}
+plotDensity(4068,marchMidweek)
+```
+
+###3409
+
+####3409
+```{r 3409,fig.width=9.5,fig.height=6,echo=FALSE}
+plotDensity(3409,marchMidweek)
+```
+
+###834
+
+####834
+```{r 834,fig.width=9.5,fig.height=6,echo=FALSE}
+plotDensity(834,marchMidweek)
+```
+
+###832
+
+####832
+```{r 832,fig.width=9.5,fig.height=6,echo=FALSE}
+plotDensity(832,marchMidweek)
+```
+###837
+
+####837
+```{r 837,fig.width=9.5,fig.height=6,echo=FALSE}
+plotDensity(837,marchMidweek)
+```
+###827
+
+####827
+```{r 827,fig.width=9.5,fig.height=6,echo=FALSE}
+plotDensity(827,marchMidweek)
+```
+###855
+
+####855
+```{r 855,fig.width=9.5,fig.height=6,echo=FALSE}
+plotDensity(855,marchMidweek)
+```
+###850
+
+####850
+```{r 850,fig.width=9.5,fig.height=6,echo=FALSE}
+plotDensity(850,marchMidweek)
+```
+###466
+
+
+####466
+```{r 466,fig.width=9.5,fig.height=6,echo=FALSE}
+plotDensity(466,marchMidweek)
+```
+###463
+
+####463
+```{r 463,fig.width=9.5,fig.height=6,echo=FALSE}
+plotDensity(463,marchMidweek)
+```
+###874
+
+####874
+```{r 874,fig.width=9.5,fig.height=6,echo=FALSE}
+plotDensity(874,marchMidweek)
+```
+
+###869
+
+
+####869
+```{r 869,fig.width=9.5,fig.height=6,echo=FALSE}
+plotDensity(869,marchMidweek)
+```
+
+###879
+
+####879
+```{r 879,fig.width=9.5,fig.height=6,echo=FALSE}
+plotDensity(879,marchMidweek)
+```
+###884
+
+####884
+```{r 884,fig.width=9.5,fig.height=6,echo=FALSE}
+plotDensity(884,marchMidweek)
+```
+###1248
+
+####1248
+```{r 1248,fig.width=9.5,fig.height=6,echo=FALSE}
+plotDensity(1248,marchMidweek)
+```
+###1251
+
+
+####1251
+```{r 1251,fig.width=9.5,fig.height=6,echo=FALSE}
+plotDensity(1251,marchMidweek)
+```
+###1610
+
+####1610
+```{r 1610,fig.width=9.5,fig.height=6,echo=FALSE}
+plotDensity(1610,marchMidweek)
+```
+###1533
+
+####1533
+```{r 1533,fig.width=9.5,fig.height=6,echo=FALSE}
+plotDensity(1533,marchMidweek)
+```
+###1605
+
+####1605
+```{r 1605,fig.width=9.5,fig.height=6,echo=FALSE}
+plotDensity(1605,marchMidweek)
+```
+
+###1539
+
+####1539
+```{r 1539,fig.width=9.5,fig.height=6,echo=FALSE}
+plotDensity(1539,marchMidweek)
+```
+
